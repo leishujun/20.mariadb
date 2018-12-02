@@ -1,0 +1,66 @@
+                    mysql源码安装
+
+需要的编译安装包
+yum install bison bison-devel zlib-devel libcurl-devel libarchive-devel boostdevel gcc gcc-c++ cmake ncurses-devel gnutls-devel libxml2-devel openssldevel libevent-devel libaio-devel openssl-devel  -y
+
+创建用户并创建好存放配置文件的文件夹，给予文件夹权限
+useradd -r -s /sbin/nologin -d /date/mysql mysql
+mkdir /date/mysql -pv
+chown mysql.mysql /date/mysql
+
+mkdir /date/app/mysql/ -pv
+mkdir /date/etc
+
+开始编译
+cd mariadb-10.2.19/
+cmake . \
+-DCMAKE_INSTALL_PREFIX=/date/app/mysql \
+-DMYSQL_DATADIR=/date/mysql/ \
+-DSYSCONFDIR=/date/etc \
+-DMYSQL_USER=mysql \
+-DWITH_INNOBASE_STORAGE_ENGINE=1 \
+-DWITH_ARCHIVE_STORAGE_ENGINE=1 \
+-DWITH_BLACKHOLE_STORAGE_ENGINE=1 \
+-DWITH_PARTITION_STORAGE_ENGINE=1 \
+-DWITHOUT_MROONGA_STORAGE_ENGINE=1 \
+-DWITH_DEBUG=0 \
+-DWITH_READLINE=1 \
+-DWITH_SSL=system \
+-DWITH_ZLIB=system \
+-DWITH_LIBWRAP=0 \
+-DENABLED_LOCAL_INFILE=1 \
+-DMYSQL_UNIX_ADDR=/date/mysql/mysql.sock \
+-DDEFAULT_CHARSET=utf8 \
+-DDEFAULT_COLLATION=utf8_general_ci
+
+
+
+指定8个线程一起编译，提高速度
+make  -j  8  && make  install   
+      
+提示：如果出错，执行
+rm -f CMakeCache.txt
+
+
+
+4.4. 准备环境变量
+echo 'PATH=$PATH:/date/app/mysql/bin' > /etc/profile.d/mysql.sh
+. /etc/profile.d/mysql.sh
+4.5. 生成数据库文件
+cd /date/app/mysql/
+scripts/mysql_install_db --datadir=/date/mysql/ --user=mysql
+4.6. 准备配置文件
+cp /date/app/mysql/support-files/my-huge.cnf /etc/my.cnf
+
+[mysqld]
+datadir = /date/mysql
+4.7. 准备启动脚本
+cp /date/app/mysql/support-files/mysql.server /etc/init.d/mysqld
+4.8. 启动服务
+chkconfig --add mysqld
+service mysqld start
+4.9. 安全初始化
+/date/app/mysql/bin/mysql_secure_installation
+
+
+

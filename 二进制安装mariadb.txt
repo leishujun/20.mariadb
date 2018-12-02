@@ -1,0 +1,66 @@
+            mysql  二进制编译
+
+3.1. 准备用户
+groupadd -r -g 306 mysql
+useradd -r -g mysql -u 306 -s /sbin/nologin -d /data/mysql -c "MariaDB User" mysql
+3.2. 准备数据目录，建议使用逻辑卷
+mkdir /data/mysql
+chown mysql:mysql /data/mysql
+或者
+install -d /data/mysql -o mysql -g mysql
+3.3. 准备二进制程序
+tar xf mariadb-VERSION-linux-x86_64.tar.gz -C /usr/local         注意：这里的VERSION不是指包名字，而是指版本
+cd /usr/local
+ln -sv mariadb-VERSION mysql
+chown -R root:mysql /usr/local/mysql/
+## 解压缩
+tar xf mariadb-10.2.19-linux-x86_64.tar.gz -C /usr/local/
+
+cd /usr/local/
+ll mariadb-10.2.19-linux-x86_64
+ln -s /usr/local/mariadb-10.2.19-linux-x86_64/ /usr/local/mysql
+
+ls /usr/local/mysql
+## 目录属性有问题，1021 1004
+chown -R root.root /usr/local/mysql/
+3.4. 准备配置文件
+mkdir /etc/mysql/
+cp support-files/my-large.cnf /etc/mysql/my.cnf
+
+vim  /etc/mysql/my.cnf
+
+[client]   //客户端需要修改一个文件
+socket          = /data/mysql/mysql.sock
+
+[mysqld]  //服务端需要修改四个文件
+datadir = /data/mysql
+innodb_file_per_table = on          ## 默认值就是on了。
+skip_name_resolve = on              ## 禁止主机名解析，建议使用
+socket=/data/mysql/mysql.sock       ## 模板默认值/tmp/mysql.sock。修改后，下一步创建数据库文件会报错。
+
+
+
+3.5. 创建数据库文件
+cd /usr/local/mysql/
+./scripts/mysql_install_db --datadir=/data/mysql --user=mysql
+## 注意：必须此目录，此脚本要去找./bin下的文件：
+
+3.6. 准备服务脚本，并启动服务
+cp /usr/local/mysql/support-files/mysql.server /etc/rc.d/init.d/mysqld
+chkconfig --add mysqld
+service mysqld start
+
+3.7. PATH路径
+echo 'PATH=/usr/local/mysql/bin:$PATH' > /etc/profile.d/mysql.sh
+. /etc/profile.d/mysql.sh
+
+
+3.8. 安全初始化
+
+ln -s /data/mysql/mysql.sock /tmp/mysql.sock   先创建一个软连接，这样后面运行的时候就不会报错
+
+/usr/local/mysql/bin/mysql_secure_installation
+
+
+
+
